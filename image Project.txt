@@ -1,0 +1,221 @@
+function varargout = Gui(varargin)
+% GUI MATLAB code for Gui.fig
+%      GUI, by itself, creates a new GUI or raises the existing
+%      singleton*.
+%
+%      H = GUI returns the handle to a new GUI or the handle to
+%      the existing singleton*.
+%
+%      GUI('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in GUI.M with the given input arguments.
+%
+%      GUI('Property','Value',...) creates a new GUI or raises the
+%      existing singleton*.  Starting from the left, property value pairs are
+%      applied to the GUI before Gui_OpeningFcn gets called.  An
+%      unrecognized property name or invalid value makes property application
+%      stop.  All inputs are passed to Gui_OpeningFcn via varargin.
+%
+%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+%      instance to run (singleton)".
+%
+% See also: GUIDE, GUIDATA, GUIHANDLES
+
+% Edit the above text to modify the response to help Gui
+
+% Last Modified by GUIDE v2.5 31-Dec-2020 23:02:08
+
+% Begin initialization code - DO NOT EDIT
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @Gui_OpeningFcn, ...
+                   'gui_OutputFcn',  @Gui_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
+if nargin && ischar(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
+end
+
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
+end
+% End initialization code - DO NOT EDIT
+
+
+% --- Executes just before Gui is made visible.
+function Gui_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to Gui (see VARARGIN)
+
+% Choose default command line output for Gui
+handles.output = hObject;
+
+% Update handles structure
+guidata(hObject, handles);
+
+% UIWAIT makes Gui wait for user response (see UIRESUME)
+% uiwait(handles.figure1);
+
+
+% --- Outputs from this function are returned to the command line.
+function varargout = Gui_OutputFcn(~, ~, handles) 
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+
+global x;
+x=imread('2.jpg');
+x=rgb2gray(x);
+axes(handles.axes1);
+% --- Executes on button press in pushbutton1.
+function pushbutton1_Callback(~, ~, handles)
+% hObject    handle to pushbutton1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global x;
+w= (1/256)* [1,4,6,4,1;4,16,24,16,4;6,24,36,24,6;4,16,24,16,4;1,4,6,4,1]; %gaussian blur 5x5
+[h_x, w_x]=size(x);
+[h_w, w_w]=size(w);
+g= zeros(h_x,w_x);
+h_w_half= (h_w-1)/2;
+w_w_half= (w_w-1)/2;
+
+imshow(x);
+for i=1:h_x
+    for j=1:w_x
+        
+        for k= -h_w_half:h_w_half
+            for l=-w_w_half:w_w_half
+                if i+k>0 && i+k<=h_x && j+l>0 && j+l<=w_x
+                    g(i,j)= g(i,j)+ w(k+h_w_half+1,l+w_w_half+1)*x(i+k,j+l);
+                end
+            end
+        end
+    end
+end
+axes(handles.axes3);
+imshow(uint8(g));
+x=g;
+
+% --- Executes on button press in pushbutton2.
+function pushbutton2_Callback(~, ~, handles)
+
+global x;
+a=x;
+
+b=size(a);
+a=double(a);
+
+hist1 = zeros(1,256);
+
+for i=1:b(1)
+    for j=1:b(2)
+        for k=0:255
+            if a(i,j)==k
+                hist1(k+1)=hist1(k+1)+1;
+            end
+        end
+    end
+end
+pdf = (1/(b(1)*b(2)))*hist1;
+
+cdf = zeros(1,256);
+cdf(i)=pdf(1);
+for i=2:256
+    
+    cdf(i)=cdf(i-1)+pdf(i);
+end
+cdf = round(255*cdf);
+ep = zeros(b);
+for i=1:b(1)
+    for j=1:b(2)
+        t=(a(i,j)+1);
+        ep(i,j)=cdf(t);        %making the output image using cdf as transformation function
+    end
+end
+
+hist2 = zeros(1,256);
+for i=1:b(1)
+    for j=1:b(2)
+        for k=0:255
+            if ep(i,j)==k
+                hist2(k+1)=hist2(k+1)+1;
+            end
+        end
+    end
+end
+ 
+
+axes(handles.axes1);
+imshow(uint8(a));
+
+axes(handles.axes3);
+imshow(uint8(ep));
+
+x=ep;
+
+%median
+
+% --- Executes on button press in pushbutton4.
+function pushbutton4_Callback(~, ~, handles)
+global x;
+a=x;
+[h_x, w_x]=size(x);
+imshow(x);
+for i=2:h_x-1
+    for j=2:w_x-1
+         g =[x(i-1,j-1),x(i-1,j),x(i-1,j+1),x(i,j-1),x(i,j),x(i,j+1),x(i+1,j-1),x(i+1,j),x(i+1,j+1)];  
+         n = sort(g);
+         x(i,j)=n(5);
+    end
+end
+axes(handles.axes3);
+imshow(uint8(x));
+
+%salt & pepper
+
+% --- Executes on button press in pushbutton5.
+function pushbutton5_Callback(hObject, eventdata, handles)
+global x;
+a=x;
+l = imnoise(a,'salt & pepper',0.05);
+imshow(l);
+x=l;
+
+%soble
+% --- Executes on button press in pushbutton6.
+function pushbutton6_Callback(hObject, eventdata, handles)
+global x;
+
+w= [1,0,-1;2,0,-2;1,0,-1];
+[h_x, w_x]=size(x);
+[h_w, w_w]=size(w);
+g= zeros(h_x,w_x);
+h_w_half= (h_w-1)/2;
+w_w_half= (w_w-1)/2;
+
+imshow(x);
+for i=1:h_x
+    for j=1:w_x
+        
+        for k= -h_w_half:h_w_half
+            for l=-w_w_half:w_w_half
+                if i+k>0 && i+k<=h_x && j+l>0 && j+l<=w_x
+                    g(i,j)= g(i,j)+ w(k+h_w_half+1,l+w_w_half+1)*x(i+k,j+l);
+                end
+            end
+        end
+    end
+end
+axes(handles.axes3);
+imshow(uint8(g));
+x=g;
